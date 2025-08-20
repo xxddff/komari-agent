@@ -120,6 +120,9 @@ func registerWithAutoDiscovery() error {
 	// 设置请求头
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", flags.AutoDiscoveryKey))
+	
+	// 添加Cloudflare Access头部
+	flags.AddCloudflareAccessHeaders(req)
 
 	// 发送请求
 	client := &http.Client{}

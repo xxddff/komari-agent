@@ -11,6 +11,7 @@ import (
 	"github.com/komari-monitor/komari-agent/server"
 	"github.com/komari-monitor/komari-agent/update"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 var RootCmd = &cobra.Command{
@@ -18,6 +19,14 @@ var RootCmd = &cobra.Command{
 	Short: "komari agent",
 	Long:  `komari agent`,
 	Run: func(cmd *cobra.Command, args []string) {
+		// 从环境变量读取值
+		if flags.CFAccessClientID == "" {
+			flags.CFAccessClientID = viper.GetString("cf_access_client_id")
+		}
+		if flags.CFAccessClientSecret == "" {
+			flags.CFAccessClientSecret = viper.GetString("cf_access_client_secret")
+		}
+
 		log.Println("Komari Agent", update.CurrentVersion)
 		log.Println("Github Repo:", update.Repo)
 		// Auto discovery
@@ -75,6 +84,10 @@ func Execute() {
 }
 
 func init() {
+	// 设置环境变量前缀
+	viper.SetEnvPrefix("KOMARI")
+	viper.AutomaticEnv()
+
 	RootCmd.PersistentFlags().StringVarP(&flags.Token, "token", "t", "", "API token")
 	//RootCmd.MarkPersistentFlagRequired("token")
 	RootCmd.PersistentFlags().StringVarP(&flags.Endpoint, "endpoint", "e", "", "API endpoint")
@@ -92,5 +105,14 @@ func init() {
 	RootCmd.PersistentFlags().StringVar(&flags.ExcludeNics, "exclude-nics", "", "Comma-separated list of network interfaces to exclude")
 	RootCmd.PersistentFlags().StringVar(&flags.IncludeMountpoints, "include-mountpoint", "", "Semicolon-separated list of mount points to include for disk statistics")
 	RootCmd.PersistentFlags().IntVar(&flags.MonthRotate, "month-rotate", 0, "Month reset for network statistics (0 to disable)")
+	RootCmd.PersistentFlags().StringVar(&flags.CFAccessClientID, "cf-access-client-id", "", "Cloudflare Access Client ID")
+	RootCmd.PersistentFlags().StringVar(&flags.CFAccessClientSecret, "cf-access-client-secret", "", "Cloudflare Access Client Secret")
+
+	// 绑定环境变量
+	viper.BindPFlag("token", RootCmd.PersistentFlags().Lookup("token"))
+	viper.BindPFlag("endpoint", RootCmd.PersistentFlags().Lookup("endpoint"))
+	viper.BindPFlag("cf_access_client_id", RootCmd.PersistentFlags().Lookup("cf-access-client-id"))
+	viper.BindPFlag("cf_access_client_secret", RootCmd.PersistentFlags().Lookup("cf-access-client-secret"))
+
 	RootCmd.PersistentFlags().ParseErrorsWhitelist.UnknownFlags = true
 }

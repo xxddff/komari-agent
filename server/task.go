@@ -70,12 +70,22 @@ func uploadTaskResult(taskID, result string, exitCode int, finishedAt time.Time)
 	jsonData, _ := json.Marshal(payload)
 	endpoint := flags.Endpoint + "/api/clients/task/result?token=" + flags.Token
 
-	resp, _ := http.Post(endpoint, "application/json", bytes.NewBuffer(jsonData))
+	// 创建请求并添加Cloudflare Access头部
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Printf("Failed to create task result request: %v", err)
+		return
+	}
+	req.Header.Set("Content-Type", "application/json")
+	flags.AddCloudflareAccessHeaders(req)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	maxRetry := flags.MaxRetries
-	for i := 0; i < maxRetry && resp.StatusCode != http.StatusOK; i++ {
+	for i := 0; i < maxRetry && (err != nil || resp.StatusCode != http.StatusOK); i++ {
 		log.Printf("Failed to upload task result, retrying %d/%d", i+1, maxRetry)
 		time.Sleep(2 * time.Second) // Wait before retrying
-		resp, _ = http.Post(endpoint, "application/json", bytes.NewBuffer(jsonData))
+		resp, err = client.Do(req)
 	}
 	if resp != nil {
 		defer resp.Body.Close()

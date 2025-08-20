@@ -12,6 +12,7 @@ require (
 	github.com/rhysd/go-github-selfupdate v1.2.3
 	github.com/shirou/gopsutil/v4 v4.25.6
 	github.com/spf13/cobra v1.9.1
+	github.com/spf13/viper v1.19.0
 	golang.org/x/sys v0.33.0
 )
 
